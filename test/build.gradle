@@ -24,6 +24,16 @@ android {
         }
     }
 
+    //日志开关
+    def LOG_DEBUG = "LOG_DEBUG"
+    //FileProvider
+    def AUTHORITY = "AUTHORITY"
+
+    defaultConfig {
+        buildConfigField "boolean", LOG_DEBUG, "true"
+        buildConfigField "String", AUTHORITY, "\"${defaultConfig.applicationId}.fileprovider\""
+    }
+
     buildTypes {
         debug {
             minifyEnabled false
@@ -76,7 +86,12 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.12.0'
 
     implementation project(":duix-sdk")
+    implementation project(":minerva")
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'com.squareup.okhttp3:okhttp-sse:4.10.0'
     implementation 'com.google.android.exoplayer:exoplayer:2.14.2'
+
+    implementation 'ink.lodz:pandora:2.0.8'
+    implementation "com.github.permissions-dispatcher:ktx:1.1.4"
+    implementation 'com.github.wendykierp:JTransforms:3.1'
 }

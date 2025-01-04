@@ -19,4 +19,46 @@
         <item>bg1.png</item>
         <item>bg2.jpg</item>
     </string-array>
+
+
+    <!-- 启动页 -->
+    <string name="main_title">数字人测试工程</string>
+    <string name="main_check_permission_tips">请在权限页面打开应用所有权限</string>
+    <string name="main_check_permission_title">请确认已打开该应用使用的所有权限</string>
+    <string name="main_check_permission_confirm">已确认</string>
+    <string name="main_check_permission_unconfirmed">再次确认</string>
+    <string name="main_check_permission_cancel">请在设置中打开权限后重启应用</string>
+    <string name="main_simple">录音实现</string>
+    <string name="main_vad">端点检测</string>
+
+    <string name="simple_config_title">配置参数</string>
+    <string name="simple_config">配置</string>
+    <string name="simple_recording_start">开始</string>
+    <string name="simple_recording_pause">暂停</string>
+    <string name="simple_recording_stop">结束</string>
+    <string name="simple_save_path">保存路径：</string>
+    <string name="simple_status">音频状态：</string>
+    <string name="simple_sound_size">当前分贝：</string>
+    <string name="simple_vad_result">检测结果：</string>
+    <string name="simple_audio_format">音频格式：</string>
+    <string name="simple_sample_rate">音频采样率：</string>
+    <string name="simple_encoding">音频位宽：</string>
+    <string name="simple_ok">确定</string>
+    <string name="simple_cancel">取消</string>
+    <string name="simple_delete_all">刪除全部</string>
+    <string name="simple_delete">刪除</string>
+    <string name="simple_play">播放</string>
+    <string name="simple_to_wav">转wav格式</string>
+    <string name="simple_config_disable">只能在空闲状态进行配置</string>
+    <string name="simple_pcm_cannot_play">不能播放PCM格式音频</string>
+
+    <string name="vad_is_save_active_voice">是否保存活动语音：</string>
+    <string name="vad_audio_format">保存音频格式：</string>
+    <string name="vad_sample_rate">端点检测采样率：</string>
+    <string name="vad_frame_size_type">端点检测帧大小类型：</string>
+    <string name="vad_mode">端点检测模式：</string>
+    <string name="vad_yes">是</string>
+    <string name="vad_no">否</string>
+    <string name="vad_start">开始</string>
+    <string name="vad_stop">停止</string>
 </resources>
