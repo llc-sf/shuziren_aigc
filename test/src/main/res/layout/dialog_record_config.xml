@@ -71,7 +71,7 @@
         android:layout_marginEnd="5dp"
         android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/cancel_btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -80,7 +80,7 @@
             android:backgroundTint="@color/color_00a1d5"
             android:text="@string/simple_cancel" />
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/ok_btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

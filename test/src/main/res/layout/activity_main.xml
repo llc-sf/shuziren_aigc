@@ -97,6 +97,14 @@
                 app:layout_constraintEnd_toStartOf="@+id/btn_model_play"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/btn_model_play" />
+
+            <Button
+                android:id="@+id/voice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="录音"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/progress_model" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 

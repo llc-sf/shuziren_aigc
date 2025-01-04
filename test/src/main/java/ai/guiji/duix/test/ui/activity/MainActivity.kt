@@ -8,6 +8,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import com.lodz.android.minervademo.ui.MainVoiceActivity
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
@@ -64,6 +65,10 @@ class MainActivity : BaseActivity() {
         }
 
         checkFile()
+
+        binding.voice.setOnClickListener {
+            startActivity(Intent(this, MainVoiceActivity::class.java))
+        }
     }
 
     private fun tryPlay() {

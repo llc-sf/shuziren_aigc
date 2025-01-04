@@ -3,6 +3,8 @@ package ai.guiji.duix.test;
 import android.app.Application;
 import android.text.TextUtils;
 
+import com.lodz.android.minervademo.utils.FileManager;
+
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -16,6 +18,7 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         mApp = this;
+        FileManager.init(this);
     }
 
     public static OkHttpClient getOkHttpClient() {

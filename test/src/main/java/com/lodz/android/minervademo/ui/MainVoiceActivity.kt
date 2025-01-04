@@ -2,16 +2,13 @@ package com.lodz.android.minervademo.ui
 
 import ai.guiji.duix.test.R
 import ai.guiji.duix.test.databinding.ActivityMain1Binding
-import ai.guiji.duix.test.databinding.ActivityMainBinding
 import android.Manifest
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import com.lodz.android.corekt.anko.getColorCompat
 import com.lodz.android.corekt.anko.goAppDetailSetting
-import com.lodz.android.corekt.anko.isPermissionGranted
 import com.lodz.android.corekt.anko.toastShort
 import com.lodz.android.minervademo.App
 import com.lodz.android.minervademo.ui.simple.SimpleActivity
@@ -27,7 +24,7 @@ import permissions.dispatcher.ktx.constructPermissionsRequest
  * @author zhouL
  * @date 2021/10/26
  */
-class MainActivity :BaseActivity(){
+class MainVoiceActivity :BaseActivity(){
 
     private val hasRecordAudioPermissions by lazy {
         constructPermissionsRequest(

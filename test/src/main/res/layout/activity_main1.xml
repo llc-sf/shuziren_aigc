@@ -5,13 +5,13 @@
     android:orientation="vertical"
     android:padding="10dp">
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/simple_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/main_simple" />
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/vad_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -23,7 +23,7 @@
         android:layout_margin="10dp"
         android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/start_btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -35,7 +35,7 @@
             android:paddingBottom="5dp"
             android:text="@string/vad_start" />
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/stop_btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

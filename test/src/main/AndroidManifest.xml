@@ -70,7 +70,7 @@
         </provider>
 
         <activity
-            android:name="com.lodz.android.minervademo.ui.MainActivity"
+            android:name="com.lodz.android.minervademo.ui.MainVoiceActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity">

@@ -19,7 +19,7 @@
             android:text="@string/simple_save_path"
             android:textColor="@color/color_00a1d5" />
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/delete_all_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
