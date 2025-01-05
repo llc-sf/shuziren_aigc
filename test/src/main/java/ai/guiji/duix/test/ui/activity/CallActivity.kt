@@ -119,6 +119,7 @@ class CallActivity : BaseActivity() {
 
                 Constant.CALLBACK_EVENT_AUDIO_PLAY_END -> {
                     Log.i(TAG_NET, "数字人播放结束")
+                    isProcessingRequest = false  // 播放结束，重置状态
                     mMinerva?.start()
                     runOnUiThread {
                         binding.btnRecord.isEnabled = true
@@ -128,6 +129,7 @@ class CallActivity : BaseActivity() {
 
                 Constant.CALLBACK_EVENT_AUDIO_PLAY_ERROR -> {
                     Log.e(TAG_NET, "数字人播放错误: $msg")
+                    isProcessingRequest = false  // 播放错误，重置状态
                     mMinerva?.start()
                     runOnUiThread {
                         Toast.makeText(mContext, "播放失败: $msg", Toast.LENGTH_SHORT).show()
@@ -262,6 +264,7 @@ class CallActivity : BaseActivity() {
     }
 
     private fun sendAudioToServer(audioFile: File) {
+        isProcessingRequest = true  // 开始处理请求
         runOnUiThread {
             binding.btnRecord.isEnabled = false
             binding.btnRecord.text = "处理中..."
@@ -294,6 +297,7 @@ class CallActivity : BaseActivity() {
                 Log.e(TAG_NET, "异常堆栈:", e)
                 runOnUiThread {
                     Toast.makeText(this@CallActivity, "网络请求失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    isProcessingRequest = false  // 请求失败，重置状态
                     binding.btnRecord.isEnabled = true
                     updateRecordButton("停止录音")
                     mMinerva?.start()
@@ -317,10 +321,12 @@ class CallActivity : BaseActivity() {
                             if (!url.isNullOrEmpty()) {
                                 Log.i(TAG_NET, "开始播放音频: $url")
                                 duix?.playAudio(url)
+                                // isProcessingRequest 状态会在播放结束回调中重置
                             } else {
                                 val errorMsg = "服务器返回数据格式错误"
                                 Log.e(TAG_NET, "$errorMsg: $responseStr")
                                 Toast.makeText(this@CallActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                                isProcessingRequest = false  // 数据格式错误，重置状态
                                 binding.btnRecord.isEnabled = true
                                 updateRecordButton("停止录音")
                                 mMinerva?.start()
@@ -329,6 +335,7 @@ class CallActivity : BaseActivity() {
                     } else {
                         Log.e(TAG_NET, "响应体为空")
                         runOnUiThread {
+                            isProcessingRequest = false  // 响应为空，重置状态
                             binding.btnRecord.isEnabled = true
                             updateRecordButton("停止录音")
                             mMinerva?.start()
@@ -338,6 +345,7 @@ class CallActivity : BaseActivity() {
                     Log.e(TAG_NET, "解析响应数据失败: ${e.message}")
                     Log.e(TAG_NET, "异常堆栈:", e)
                     runOnUiThread {
+                        isProcessingRequest = false  // 解析失败，重置状态
                         binding.btnRecord.isEnabled = true
                         updateRecordButton("停止录音")
                         mMinerva?.start()
