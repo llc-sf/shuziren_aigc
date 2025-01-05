@@ -317,16 +317,15 @@ class CallActivity : BaseActivity() {
                         val url = jsonNode.get("url")?.asText()
                         Log.i(TAG_NET, "解析到URL: $url")
                         
-                        runOnUiThread {
-                            if (!url.isNullOrEmpty()) {
-                                Log.i(TAG_NET, "开始播放音频: $url")
-                                duix?.playAudio(url)
-                                // isProcessingRequest 状态会在播放结束回调中重置
-                            } else {
-                                val errorMsg = "服务器返回数据格式错误"
-                                Log.e(TAG_NET, "$errorMsg: $responseStr")
+                        if (!url.isNullOrEmpty()) {
+                            // 下载音频文件并播放
+                            downloadAudioAndPlay(url)
+                        } else {
+                            val errorMsg = "服务器返回数据格式错误"
+                            Log.e(TAG_NET, "$errorMsg: $responseStr")
+                            runOnUiThread {
                                 Toast.makeText(this@CallActivity, errorMsg, Toast.LENGTH_SHORT).show()
-                                isProcessingRequest = false  // 数据格式错误，重置状态
+                                isProcessingRequest = false
                                 binding.btnRecord.isEnabled = true
                                 updateRecordButton("停止录音")
                                 mMinerva?.start()
@@ -383,6 +382,78 @@ class CallActivity : BaseActivity() {
                 Toast.makeText(this, "需要录音权限才能使用该功能", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun downloadAudioAndPlay(audioUrl: String) {
+        Log.i(TAG_NET, "开始下载音频: $audioUrl")
+        val request = Request.Builder()
+            .url(audioUrl)
+            .get()
+            .build()
+
+        OkHttpClient().newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG_NET, "音频下载失败: ${e.message}")
+                Log.e(TAG_NET, "失败URL: ${call.request().url}")
+                Log.e(TAG_NET, "异常堆栈:", e)
+                runOnUiThread {
+                    Toast.makeText(this@CallActivity, "音频下载失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    isProcessingRequest = false
+                    binding.btnRecord.isEnabled = true
+                    updateRecordButton("停止录音")
+                    mMinerva?.start()
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                try {
+                    response.body?.let { responseBody ->
+                        // 创建保存音频的目录
+                        val audioDir = File(mContext.getExternalFilesDir("duix"), "audio")
+                        if (!audioDir.exists()) {
+                            audioDir.mkdirs()
+                        }
+
+                        // 生成本地文件名
+                        val fileName = "response_${System.currentTimeMillis()}.wav"
+                        val localFile = File(audioDir, fileName)
+
+                        // 保存音频文件
+                        localFile.outputStream().use { fileOut ->
+                            responseBody.byteStream().use { bodyIn ->
+                                bodyIn.copyTo(fileOut)
+                            }
+                        }
+
+                        Log.i(TAG_NET, "音频下载完成，保存至: ${localFile.absolutePath}")
+
+                        // 播放本地音频文件
+                        runOnUiThread {
+                            duix?.playAudio(localFile.absolutePath)
+                        }
+                    } ?: run {
+                        Log.e(TAG_NET, "下载响应体为空")
+                        runOnUiThread {
+                            Toast.makeText(this@CallActivity, "下载响应体为空", Toast.LENGTH_SHORT).show()
+                            isProcessingRequest = false
+                            binding.btnRecord.isEnabled = true
+                            updateRecordButton("停止录音")
+                            mMinerva?.start()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG_NET, "保存音频文件失败: ${e.message}")
+                    Log.e(TAG_NET, "异常堆栈:", e)
+                    runOnUiThread {
+                        Toast.makeText(this@CallActivity, "保存音频文件失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                        isProcessingRequest = false
+                        binding.btnRecord.isEnabled = true
+                        updateRecordButton("停止录音")
+                        mMinerva?.start()
+                    }
+                }
+            }
+        })
     }
 
 }
