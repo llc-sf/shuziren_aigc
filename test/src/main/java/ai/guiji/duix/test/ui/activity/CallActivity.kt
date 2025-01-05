@@ -47,6 +47,7 @@ class CallActivity : BaseActivity() {
         const val GL_CONTEXT_VERSION = 2
         private const val TTS_URL = "http://14.19.140.88:8280/v1/tts"
         private const val PERMISSION_REQUEST_CODE = 1001
+        private const val TAG_NET = "DUIX_NET"
     }
 
     private var baseDir = ""
@@ -257,6 +258,12 @@ class CallActivity : BaseActivity() {
             binding.btnRecord.text = "处理中..."
         }
 
+        // 打印请求信息
+        Log.i(TAG_NET, "开始发送请求")
+        Log.i(TAG_NET, "请求URL: $TTS_URL")
+        Log.i(TAG_NET, "音频文件: ${audioFile.absolutePath}")
+        Log.i(TAG_NET, "文件大小: ${audioFile.length()} bytes")
+
         val requestBody = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart(
@@ -273,9 +280,11 @@ class CallActivity : BaseActivity() {
 
         OkHttpClient().newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG_NET, "请求失败: ${e.message}")
+                Log.e(TAG_NET, "失败URL: ${call.request().url}")
+                Log.e(TAG_NET, "异常堆栈:", e)
                 runOnUiThread {
                     Toast.makeText(this@CallActivity, "网络请求失败: ${e.message}", Toast.LENGTH_SHORT).show()
-                    Log.e("net_error", "请求失败", e)
                     isProcessingRequest = false
                     binding.btnRecord.isEnabled = true
                     updateRecordButton("开始录音")
@@ -284,25 +293,32 @@ class CallActivity : BaseActivity() {
 
             override fun onResponse(call: Call, response: Response) {
                 try {
+                    Log.i(TAG_NET, "收到响应 状态码: ${response.code}")
+                    Log.i(TAG_NET, "响应头: ${response.headers}")
+                    
                     val responseStr = response.body?.string()
-                    Log.d("net_response", "响应数据: $responseStr")
+                    Log.i(TAG_NET, "响应数据: $responseStr")
                     
                     if (responseStr != null) {
                         val jsonNode = objectMapper.readTree(responseStr)
                         val url = jsonNode.get("url")?.asText()
+                        Log.i(TAG_NET, "解析到URL: $url")
                         
                         runOnUiThread {
                             if (!url.isNullOrEmpty()) {
+                                Log.i(TAG_NET, "开始播放音频: $url")
                                 duix?.playAudio(url)
                             } else {
-                                Toast.makeText(this@CallActivity, "服务器返回数据格式错误", Toast.LENGTH_SHORT).show()
-                                Log.e("net_error", "返回数据格式错误: $responseStr")
+                                val errorMsg = "服务器返回数据格式错误"
+                                Log.e(TAG_NET, "$errorMsg: $responseStr")
+                                Toast.makeText(this@CallActivity, errorMsg, Toast.LENGTH_SHORT).show()
                             }
                             isProcessingRequest = false
                             binding.btnRecord.isEnabled = true
                             updateRecordButton("开始录音")
                         }
                     } else {
+                        Log.e(TAG_NET, "响应体为空")
                         runOnUiThread {
                             Toast.makeText(this@CallActivity, "服务器返回数据为空", Toast.LENGTH_SHORT).show()
                             isProcessingRequest = false
@@ -311,7 +327,8 @@ class CallActivity : BaseActivity() {
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e("net_error", "解析响应数据失败", e)
+                    Log.e(TAG_NET, "解析响应数据失败: ${e.message}")
+                    Log.e(TAG_NET, "异常堆栈:", e)
                     runOnUiThread {
                         Toast.makeText(this@CallActivity, "解析响应数据失败: ${e.message}", Toast.LENGTH_SHORT).show()
                         isProcessingRequest = false
