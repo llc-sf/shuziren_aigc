@@ -1,4 +1,5 @@
 dependencies {
     implementation 'com.google.android.material:material:1.9.0'  // 使用最新的稳定版本
     implementation "com.squareup.okhttp3:okhttp:4.9.3"
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.7'
 } 

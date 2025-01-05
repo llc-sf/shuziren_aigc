@@ -38,13 +38,14 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.fasterxml.jackson.databind.ObjectMapper
 
 
 class CallActivity : BaseActivity() {
 
     companion object {
         const val GL_CONTEXT_VERSION = 2
-        private const val TTS_URL = "http://192.168.2.252:8280/v1/tts"
+        private const val TTS_URL = "http://14.19.140.88:8280/v1/tts"
         private const val PERMISSION_REQUEST_CODE = 1001
     }
 
@@ -58,6 +59,8 @@ class CallActivity : BaseActivity() {
     private var mMinerva: MinervaVad? = null
     private val mFilePath by lazy { getExternalFilesDir("vad")?.absolutePath ?: "" }
     private var mStatus: AudioStatus = AudioStatus.IDLE
+    private var isProcessingRequest = false
+    private val objectMapper = ObjectMapper()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -127,6 +130,11 @@ class CallActivity : BaseActivity() {
         duix?.init()
 
         binding.btnRecord.setOnClickListener {
+            if (isProcessingRequest) {
+                Toast.makeText(this, "正在处理请求，请稍候", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
             when (mStatus) {
                 AudioStatus.IDLE -> mMinerva?.start()
                 AudioStatus.VAD_DETECT -> mMinerva?.stop()
@@ -207,20 +215,28 @@ class CallActivity : BaseActivity() {
             .setOnRecordingStatesListener { state ->
                 when (state) {
                     is Idle -> {
-                        mStatus = AudioStatus.IDLE
-                        updateRecordButton("开始录音")
+                        if (!isProcessingRequest) {
+                            mStatus = AudioStatus.IDLE
+                            updateRecordButton("开始录音")
+                        }
                     }
                     is VadDetect -> {
-                        mStatus = AudioStatus.VAD_DETECT
-                        updateRecordButton("停止录音")
+                        if (!isProcessingRequest) {
+                            mStatus = AudioStatus.VAD_DETECT
+                            updateRecordButton("停止录音")
+                        }
                     }
                     is VadFileSave -> {
-                        sendAudioToServer(state.file)
+                        if (!isProcessingRequest) {
+                            sendAudioToServer(state.file)
+                        }
                     }
                     is Error -> {
-                        Toast.makeText(this, "录音错误", Toast.LENGTH_SHORT).show()
-                        mStatus = AudioStatus.IDLE
-                        updateRecordButton("开始录音")
+                        if (!isProcessingRequest) {
+                            Toast.makeText(this, "录音错误", Toast.LENGTH_SHORT).show()
+                            mStatus = AudioStatus.IDLE
+                            updateRecordButton("开始录音")
+                        }
                     }
                     else -> {}
                 }
@@ -235,10 +251,16 @@ class CallActivity : BaseActivity() {
     }
 
     private fun sendAudioToServer(audioFile: File) {
+        isProcessingRequest = true
+        runOnUiThread {
+            binding.btnRecord.isEnabled = false
+            binding.btnRecord.text = "处理中..."
+        }
+
         val requestBody = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart(
-                "file", 
+                "audio_file",
                 audioFile.name,
                 audioFile.asRequestBody("audio/wav".toMediaTypeOrNull())
             )
@@ -253,15 +275,48 @@ class CallActivity : BaseActivity() {
             override fun onFailure(call: Call, e: IOException) {
                 runOnUiThread {
                     Toast.makeText(this@CallActivity, "网络请求失败: ${e.message}", Toast.LENGTH_SHORT).show()
-                    Log.i("net_error", e.message.toString())
+                    Log.e("net_error", "请求失败", e)
+                    isProcessingRequest = false
+                    binding.btnRecord.isEnabled = true
+                    updateRecordButton("开始录音")
                 }
             }
 
             override fun onResponse(call: Call, response: Response) {
-                val audioUrl = response.body?.string()
-                if (!audioUrl.isNullOrEmpty()) {
+                try {
+                    val responseStr = response.body?.string()
+                    Log.d("net_response", "响应数据: $responseStr")
+                    
+                    if (responseStr != null) {
+                        val jsonNode = objectMapper.readTree(responseStr)
+                        val url = jsonNode.get("url")?.asText()
+                        
+                        runOnUiThread {
+                            if (!url.isNullOrEmpty()) {
+                                duix?.playAudio(url)
+                            } else {
+                                Toast.makeText(this@CallActivity, "服务器返回数据格式错误", Toast.LENGTH_SHORT).show()
+                                Log.e("net_error", "返回数据格式错误: $responseStr")
+                            }
+                            isProcessingRequest = false
+                            binding.btnRecord.isEnabled = true
+                            updateRecordButton("开始录音")
+                        }
+                    } else {
+                        runOnUiThread {
+                            Toast.makeText(this@CallActivity, "服务器返回数据为空", Toast.LENGTH_SHORT).show()
+                            isProcessingRequest = false
+                            binding.btnRecord.isEnabled = true
+                            updateRecordButton("开始录音")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("net_error", "解析响应数据失败", e)
                     runOnUiThread {
-                        duix?.playAudio(audioUrl)
+                        Toast.makeText(this@CallActivity, "解析响应数据失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                        isProcessingRequest = false
+                        binding.btnRecord.isEnabled = true
+                        updateRecordButton("开始录音")
                     }
                 }
             }
