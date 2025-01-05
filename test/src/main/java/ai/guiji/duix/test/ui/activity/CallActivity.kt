@@ -147,13 +147,7 @@ class CallActivity : BaseActivity() {
         // 异步回调结果
         duix?.init()
 
-        binding.btnRecord.setOnClickListener {
-            when (mStatus) {
-                AudioStatus.IDLE -> mMinerva?.start()
-                AudioStatus.VAD_DETECT -> mMinerva?.stop()
-                else -> {}
-            }
-        }
+        binding.btnRecord.isEnabled = false  // 按钮不可点击，只用于显示状态
 
         if (checkRecordPermission()) {
             initMinerva()
@@ -163,10 +157,16 @@ class CallActivity : BaseActivity() {
     }
 
     private fun initOk() {
-        Log.e(TAG, "init ok")
-//        runOnUiThread {
-//            binding.btnPlay.visibility = View.VISIBLE
-//        }
+        Log.i(TAG_NET, "数字人初始化完成")
+        // 初始化完成后自动开始录音
+        if (checkRecordPermission()) {
+            initMinerva()
+            // 自动开始录音
+            mMinerva?.start()
+            runOnUiThread {
+                binding.btnRecord.text = "正在录音"
+            }
+        }
     }
 
 
@@ -230,7 +230,9 @@ class CallActivity : BaseActivity() {
                     is Idle -> {
                         if (!isProcessingRequest) {
                             mStatus = AudioStatus.IDLE
-                            updateRecordButton("开始录音")
+                            // 空闲状态自动开始录音
+                            mMinerva?.start()
+                            updateRecordButton("正在录音")
                         }
                     }
                     is VadDetect -> {
@@ -248,7 +250,9 @@ class CallActivity : BaseActivity() {
                         if (!isProcessingRequest) {
                             Toast.makeText(this, "录音错误", Toast.LENGTH_SHORT).show()
                             mStatus = AudioStatus.IDLE
-                            updateRecordButton("开始录音")
+                            // 错误后自动重试
+                            mMinerva?.start()
+                            updateRecordButton("正在录音")
                         }
                     }
                     else -> {}

@@ -46,7 +46,7 @@
 
             <Button
                 android:id="@+id/btn_base_config_download"
-                android:layout_width="120dp"
+                android:layout_width="130dp"
                 android:layout_height="48dp"
                 android:enabled="false"
                 android:text="@string/download"
@@ -78,7 +78,7 @@
 
             <Button
                 android:id="@+id/btn_model_play"
-                android:layout_width="120dp"
+                android:layout_width="130dp"
                 android:layout_height="48dp"
                 android:enabled="false"
                 android:text="数字人页面"
