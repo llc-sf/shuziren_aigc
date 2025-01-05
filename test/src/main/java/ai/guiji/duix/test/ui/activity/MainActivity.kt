@@ -4,10 +4,18 @@ import ai.guiji.duix.sdk.client.BuildConfig
 import ai.guiji.duix.test.R
 import ai.guiji.duix.test.databinding.ActivityMainBinding
 import ai.guiji.duix.test.service.StorageService
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.lodz.android.minervademo.ui.MainVoiceActivity
 import java.io.BufferedReader
 import java.io.File
@@ -16,6 +24,10 @@ import java.io.InputStreamReader
 
 
 class MainActivity : BaseActivity() {
+
+    companion object {
+        private const val PERMISSION_REQUEST_CODE = 1001
+    }
 
     private lateinit var binding: ActivityMainBinding
 
@@ -35,6 +47,12 @@ class MainActivity : BaseActivity() {
     private val liangweiUUID = "d39caddd-488b-4682-b6d1-13549b135dd1"       // 可以用来控制模型文件版本
     private var modelReady = false
 
+    // 添加需要检查的权限列表
+    private val requiredPermissions = arrayOf(
+        Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    )
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,7 +79,15 @@ class MainActivity : BaseActivity() {
             downloadBaseConfig()
         }
         binding.btnModelPlay.setOnClickListener {
-            tryPlay()
+            if (!modelReady) {
+                downloadModel()
+            } else if (!baseConfigReady) {
+                Toast.makeText(mContext, "您必须正确安装基础配置文件", Toast.LENGTH_SHORT).show()
+            } else if (checkPermissions()) {
+                startCallActivity()
+            } else {
+                requestPermissions()
+            }
         }
 
         checkFile()
@@ -71,17 +97,105 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun tryPlay() {
-        if (!modelReady) {
-            downloadModel()
-        } else if (!baseConfigReady) {
-            Toast.makeText(mContext, "您必须正确的安装基础配置文件", Toast.LENGTH_SHORT).show()
-        } else {
-            val intent = Intent(mContext, CallActivity::class.java)
-            intent.putExtra("baseDir", baseDir.absolutePath)
-            intent.putExtra("modelDir", modelDir.absolutePath)
-            startActivity(intent)
+    private fun checkPermissions(): Boolean {
+        return requiredPermissions.all { permission ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && 
+                permission in arrayOf(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+            ) {
+                // Android 10 及以上不需要存储权限
+                true
+            } else {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    permission
+                ) == PackageManager.PERMISSION_GRANTED
+            }
         }
+    }
+
+    private fun requestPermissions() {
+        val permissionsToRequest = requiredPermissions.filter { permission ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && 
+                permission in arrayOf(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+            ) {
+                // Android 10 及以上不需要存储权限
+                false
+            } else {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    permission
+                ) != PackageManager.PERMISSION_GRANTED
+            }
+        }.toTypedArray()
+
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsToRequest,
+                PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                // 所有权限都已获得，再次检查模型和配置
+                if (!modelReady) {
+                    downloadModel()
+                } else if (!baseConfigReady) {
+                    Toast.makeText(mContext, "您必须正确安装基础配置文件", Toast.LENGTH_SHORT).show()
+                } else {
+                    startCallActivity()
+                }
+            } else {
+                // 有权限被拒绝
+                Toast.makeText(
+                    this,
+                    "需要录音和存储权限才能使用该功能",
+                    Toast.LENGTH_SHORT
+                ).show()
+                showPermissionExplanationDialog()
+            }
+        }
+    }
+
+    private fun showPermissionExplanationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("需要权限")
+            .setMessage("此功能需要录音和存储权限才能正常使用。请在设置中开启相关权限。")
+            .setPositiveButton("去设置") { _, _ ->
+                // 跳转到应用设置页面
+                openAppSettings()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        startActivity(intent)
+    }
+
+    private fun startCallActivity() {
+        // 原有的启动 CallActivity 的代码
+        val intent = Intent(this, CallActivity::class.java)
+        intent.putExtra("baseDir", baseDir.absolutePath)
+        intent.putExtra("modelDir", modelDir.absolutePath)
+        startActivity(intent)
     }
 
     private fun downloadBaseConfig() {
@@ -150,7 +264,7 @@ class MainActivity : BaseActivity() {
                 override fun onComplete(path: String?) {
                     runOnUiThread {
                         binding.btnModelPlay.isEnabled = true
-                        binding.btnModelPlay.text = getString(R.string.play)
+                        binding.btnModelPlay.text = "进入数字人页面"
                         binding.progressModel.progress = 100
                         modelReady = true
                     }
@@ -194,7 +308,7 @@ class MainActivity : BaseActivity() {
             ).readLine()
         ) {
             binding.btnModelPlay.isEnabled = true
-            binding.btnModelPlay.text = getString(R.string.play)
+            binding.btnModelPlay.text = "进入数字人页面"
             binding.progressModel.progress = 100
             modelReady = true
         } else {
