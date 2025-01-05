@@ -81,7 +81,7 @@
                 android:layout_width="120dp"
                 android:layout_height="48dp"
                 android:enabled="false"
-                android:text="@string/play"
+                android:text="数字人页面"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tv_model_title" />
 
@@ -103,6 +103,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="录音"
+                android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/progress_model" />
         </androidx.constraintlayout.widget.ConstraintLayout>
