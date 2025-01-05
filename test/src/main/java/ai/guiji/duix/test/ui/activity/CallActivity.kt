@@ -62,6 +62,7 @@ class CallActivity : BaseActivity() {
     private var mStatus: AudioStatus = AudioStatus.IDLE
     private var isProcessingRequest = false
     private val objectMapper = ObjectMapper()
+    private var isPlaying = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,17 +109,31 @@ class CallActivity : BaseActivity() {
                 }
 
                 Constant.CALLBACK_EVENT_AUDIO_PLAY_START -> {
+                    Log.i(TAG_NET, "数字人开始播放")
+                    mMinerva?.pause()
                     runOnUiThread {
-
+                        binding.btnRecord.isEnabled = false
+                        binding.btnRecord.text = "播放中..."
                     }
                 }
 
                 Constant.CALLBACK_EVENT_AUDIO_PLAY_END -> {
-                    Log.e(TAG, "CALLBACK_EVENT_PLAY_END: $msg")
+                    Log.i(TAG_NET, "数字人播放结束")
+                    mMinerva?.start()
+                    runOnUiThread {
+                        binding.btnRecord.isEnabled = true
+                        updateRecordButton("停止录音")
+                    }
                 }
 
                 Constant.CALLBACK_EVENT_AUDIO_PLAY_ERROR -> {
-                    Log.e(TAG, "CALLBACK_EVENT_PLAY_ERROR: $msg")
+                    Log.e(TAG_NET, "数字人播放错误: $msg")
+                    mMinerva?.start()
+                    runOnUiThread {
+                        Toast.makeText(mContext, "播放失败: $msg", Toast.LENGTH_SHORT).show()
+                        binding.btnRecord.isEnabled = true
+                        updateRecordButton("停止录音")
+                    }
                 }
 
                 Constant.CALLBACK_EVENT_AUDIO_PLAY_PROGRESS -> {
@@ -131,11 +146,6 @@ class CallActivity : BaseActivity() {
         duix?.init()
 
         binding.btnRecord.setOnClickListener {
-            if (isProcessingRequest) {
-                Toast.makeText(this, "正在处理请求，请稍候", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            
             when (mStatus) {
                 AudioStatus.IDLE -> mMinerva?.start()
                 AudioStatus.VAD_DETECT -> mMinerva?.stop()
@@ -252,7 +262,6 @@ class CallActivity : BaseActivity() {
     }
 
     private fun sendAudioToServer(audioFile: File) {
-        isProcessingRequest = true
         runOnUiThread {
             binding.btnRecord.isEnabled = false
             binding.btnRecord.text = "处理中..."
@@ -285,9 +294,9 @@ class CallActivity : BaseActivity() {
                 Log.e(TAG_NET, "异常堆栈:", e)
                 runOnUiThread {
                     Toast.makeText(this@CallActivity, "网络请求失败: ${e.message}", Toast.LENGTH_SHORT).show()
-                    isProcessingRequest = false
                     binding.btnRecord.isEnabled = true
-                    updateRecordButton("开始录音")
+                    updateRecordButton("停止录音")
+                    mMinerva?.start()
                 }
             }
 
@@ -312,28 +321,26 @@ class CallActivity : BaseActivity() {
                                 val errorMsg = "服务器返回数据格式错误"
                                 Log.e(TAG_NET, "$errorMsg: $responseStr")
                                 Toast.makeText(this@CallActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                                binding.btnRecord.isEnabled = true
+                                updateRecordButton("停止录音")
+                                mMinerva?.start()
                             }
-                            isProcessingRequest = false
-                            binding.btnRecord.isEnabled = true
-                            updateRecordButton("开始录音")
                         }
                     } else {
                         Log.e(TAG_NET, "响应体为空")
                         runOnUiThread {
-                            Toast.makeText(this@CallActivity, "服务器返回数据为空", Toast.LENGTH_SHORT).show()
-                            isProcessingRequest = false
                             binding.btnRecord.isEnabled = true
-                            updateRecordButton("开始录音")
+                            updateRecordButton("停止录音")
+                            mMinerva?.start()
                         }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG_NET, "解析响应数据失败: ${e.message}")
                     Log.e(TAG_NET, "异常堆栈:", e)
                     runOnUiThread {
-                        Toast.makeText(this@CallActivity, "解析响应数据失败: ${e.message}", Toast.LENGTH_SHORT).show()
-                        isProcessingRequest = false
                         binding.btnRecord.isEnabled = true
-                        updateRecordButton("开始录音")
+                        updateRecordButton("停止录音")
+                        mMinerva?.start()
                     }
                 }
             }
