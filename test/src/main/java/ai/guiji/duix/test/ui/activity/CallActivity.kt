@@ -123,7 +123,7 @@ class CallActivity : BaseActivity() {
                     mMinerva?.start()
                     runOnUiThread {
                         binding.btnRecord.isEnabled = true
-                        updateRecordButton("停止录音")
+                        updateRecordButton("正在录音")
                     }
                 }
 
@@ -134,7 +134,7 @@ class CallActivity : BaseActivity() {
                     runOnUiThread {
                         Toast.makeText(mContext, "播放失败: $msg", Toast.LENGTH_SHORT).show()
                         binding.btnRecord.isEnabled = true
-                        updateRecordButton("停止录音")
+                        updateRecordButton("正在录音")
                     }
                 }
 
@@ -164,9 +164,9 @@ class CallActivity : BaseActivity() {
 
     private fun initOk() {
         Log.e(TAG, "init ok")
-        runOnUiThread {
-            binding.btnPlay.visibility = View.VISIBLE
-        }
+//        runOnUiThread {
+//            binding.btnPlay.visibility = View.VISIBLE
+//        }
     }
 
 
@@ -236,7 +236,7 @@ class CallActivity : BaseActivity() {
                     is VadDetect -> {
                         if (!isProcessingRequest) {
                             mStatus = AudioStatus.VAD_DETECT
-                            updateRecordButton("停止录音")
+                            updateRecordButton("正在录音")
                         }
                     }
                     is VadFileSave -> {
@@ -299,7 +299,7 @@ class CallActivity : BaseActivity() {
                     Toast.makeText(this@CallActivity, "网络请求失败: ${e.message}", Toast.LENGTH_SHORT).show()
                     isProcessingRequest = false  // 请求失败，重置状态
                     binding.btnRecord.isEnabled = true
-                    updateRecordButton("停止录音")
+                    updateRecordButton("正在录音")
                     mMinerva?.start()
                 }
             }
@@ -327,7 +327,7 @@ class CallActivity : BaseActivity() {
                                 Toast.makeText(this@CallActivity, errorMsg, Toast.LENGTH_SHORT).show()
                                 isProcessingRequest = false
                                 binding.btnRecord.isEnabled = true
-                                updateRecordButton("停止录音")
+                                updateRecordButton("正在录音")
                                 mMinerva?.start()
                             }
                         }
@@ -336,7 +336,7 @@ class CallActivity : BaseActivity() {
                         runOnUiThread {
                             isProcessingRequest = false  // 响应为空，重置状态
                             binding.btnRecord.isEnabled = true
-                            updateRecordButton("停止录音")
+                            updateRecordButton("正在录音")
                             mMinerva?.start()
                         }
                     }
@@ -346,7 +346,7 @@ class CallActivity : BaseActivity() {
                     runOnUiThread {
                         isProcessingRequest = false  // 解析失败，重置状态
                         binding.btnRecord.isEnabled = true
-                        updateRecordButton("停止录音")
+                        updateRecordButton("正在录音")
                         mMinerva?.start()
                     }
                 }
@@ -400,7 +400,7 @@ class CallActivity : BaseActivity() {
                     Toast.makeText(this@CallActivity, "音频下载失败: ${e.message}", Toast.LENGTH_SHORT).show()
                     isProcessingRequest = false
                     binding.btnRecord.isEnabled = true
-                    updateRecordButton("停止录音")
+                    updateRecordButton("正在录音")
                     mMinerva?.start()
                 }
             }
@@ -437,7 +437,7 @@ class CallActivity : BaseActivity() {
                             Toast.makeText(this@CallActivity, "下载响应体为空", Toast.LENGTH_SHORT).show()
                             isProcessingRequest = false
                             binding.btnRecord.isEnabled = true
-                            updateRecordButton("停止录音")
+                            updateRecordButton("正在录音")
                             mMinerva?.start()
                         }
                     }
@@ -448,7 +448,7 @@ class CallActivity : BaseActivity() {
                         Toast.makeText(this@CallActivity, "保存音频文件失败: ${e.message}", Toast.LENGTH_SHORT).show()
                         isProcessingRequest = false
                         binding.btnRecord.isEnabled = true
-                        updateRecordButton("停止录音")
+                        updateRecordButton("正在录音")
                         mMinerva?.start()
                     }
                 }
