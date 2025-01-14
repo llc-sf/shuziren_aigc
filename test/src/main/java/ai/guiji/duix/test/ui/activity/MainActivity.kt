@@ -12,6 +12,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -29,9 +31,11 @@ class MainActivity : BaseActivity() {
         private const val PERMISSION_REQUEST_CODE = 1001
         private const val PREF_NAME = "duix_settings"
         private const val KEY_TTS_URL = "tts_url"
+        private const val DEFAULT_TTS_URL = "http://14.19.140.88:8280/v1/tts"
     }
 
     private lateinit var binding: ActivityMainBinding
+    private val sharedPrefs by lazy { getSharedPreferences(PREF_NAME, MODE_PRIVATE) }
 
     private val baseConfigUrl =
         "https://cdn.guiji.ai/duix/location/gj_dh_res.zip"
@@ -77,9 +81,8 @@ class MainActivity : BaseActivity() {
             modelUrl.substring(modelUrl.lastIndexOf("/") + 1).replace(".zip", "")
         )        // 这里要求存放模型的文件夹的名字和下载的zip文件的一致以对应解压的文件夹路径
 
-        // 从 SharedPreferences 加载保存的 URL
-        val sharedPrefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
-        val savedUrl = sharedPrefs.getString(KEY_TTS_URL, "http://14.19.140.88:8280/v1/tts")
+        // 从 SharedPreferences 加载上次保存的 URL
+        val savedUrl = sharedPrefs.getString(KEY_TTS_URL, DEFAULT_TTS_URL)
         binding.etTtsUrl.setText(savedUrl)
 
         binding.btnBaseConfigDownload.setOnClickListener {
@@ -91,14 +94,14 @@ class MainActivity : BaseActivity() {
             } else if (!baseConfigReady) {
                 Toast.makeText(mContext, "您必须正确安装基础配置文件", Toast.LENGTH_SHORT).show()
             } else if (checkPermissions()) {
-                // 保存当前输入的 URL
+                // 获取并验证当前输入的 URL
                 val ttsUrl = binding.etTtsUrl.text.toString().trim()
                 if (ttsUrl.isEmpty()) {
                     Toast.makeText(mContext, "请输入TTS服务地址", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
-                
-                // 保存到 SharedPreferences
+
+                // 保存当前输入的 URL
                 sharedPrefs.edit().putString(KEY_TTS_URL, ttsUrl).apply()
                 
                 startCallActivity(ttsUrl)
@@ -106,6 +109,20 @@ class MainActivity : BaseActivity() {
                 requestPermissions()
             }
         }
+
+        // 添加 URL 输入框的文本变化监听
+        binding.etTtsUrl.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                // 当用户输入完成后自动保存
+                s?.toString()?.trim()?.let { url ->
+                    if (url.isNotEmpty()) {
+                        sharedPrefs.edit().putString(KEY_TTS_URL, url).apply()
+                    }
+                }
+            }
+        })
 
         checkFile()
 
@@ -168,21 +185,21 @@ class MainActivity : BaseActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                // 所有权限都已获得，再次检查模型和配置
                 if (!modelReady) {
                     downloadModel()
                 } else if (!baseConfigReady) {
                     Toast.makeText(mContext, "您必须正确安装基础配置文件", Toast.LENGTH_SHORT).show()
                 } else {
-                    startCallActivity()
+                    // 获取并验证当前输入的 URL
+                    val ttsUrl = binding.etTtsUrl.text.toString().trim()
+                    if (ttsUrl.isNotEmpty()) {
+                        startCallActivity(ttsUrl)
+                    } else {
+                        Toast.makeText(mContext, "请输入TTS服务地址", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } else {
-                // 有权限被拒绝
-                Toast.makeText(
-                    this,
-                    "需要录音和存储权限才能使用该功能",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, "需要录音和存储权限才能使用该功能", Toast.LENGTH_SHORT).show()
                 showPermissionExplanationDialog()
             }
         }
