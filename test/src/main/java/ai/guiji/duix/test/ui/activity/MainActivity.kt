@@ -27,6 +27,8 @@ class MainActivity : BaseActivity() {
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 1001
+        private const val PREF_NAME = "duix_settings"
+        private const val KEY_TTS_URL = "tts_url"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -75,6 +77,11 @@ class MainActivity : BaseActivity() {
             modelUrl.substring(modelUrl.lastIndexOf("/") + 1).replace(".zip", "")
         )        // 这里要求存放模型的文件夹的名字和下载的zip文件的一致以对应解压的文件夹路径
 
+        // 从 SharedPreferences 加载保存的 URL
+        val sharedPrefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        val savedUrl = sharedPrefs.getString(KEY_TTS_URL, "http://14.19.140.88:8280/v1/tts")
+        binding.etTtsUrl.setText(savedUrl)
+
         binding.btnBaseConfigDownload.setOnClickListener {
             downloadBaseConfig()
         }
@@ -84,7 +91,17 @@ class MainActivity : BaseActivity() {
             } else if (!baseConfigReady) {
                 Toast.makeText(mContext, "您必须正确安装基础配置文件", Toast.LENGTH_SHORT).show()
             } else if (checkPermissions()) {
-                startCallActivity()
+                // 保存当前输入的 URL
+                val ttsUrl = binding.etTtsUrl.text.toString().trim()
+                if (ttsUrl.isEmpty()) {
+                    Toast.makeText(mContext, "请输入TTS服务地址", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                
+                // 保存到 SharedPreferences
+                sharedPrefs.edit().putString(KEY_TTS_URL, ttsUrl).apply()
+                
+                startCallActivity(ttsUrl)
             } else {
                 requestPermissions()
             }
@@ -190,11 +207,12 @@ class MainActivity : BaseActivity() {
         startActivity(intent)
     }
 
-    private fun startCallActivity() {
-        // 原有的启动 CallActivity 的代码
-        val intent = Intent(this, CallActivity::class.java)
-        intent.putExtra("baseDir", baseDir.absolutePath)
-        intent.putExtra("modelDir", modelDir.absolutePath)
+    private fun startCallActivity(ttsUrl: String? = null) {
+        val intent = Intent(this, CallActivity::class.java).apply {
+            putExtra("baseDir", baseDir.absolutePath)
+            putExtra("modelDir", modelDir.absolutePath)
+            putExtra("ttsUrl", ttsUrl)  // 添加 ttsUrl 参数
+        }
         startActivity(intent)
     }
 

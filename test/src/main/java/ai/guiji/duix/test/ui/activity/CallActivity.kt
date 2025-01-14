@@ -45,13 +45,14 @@ class CallActivity : BaseActivity() {
 
     companion object {
         const val GL_CONTEXT_VERSION = 2
-        private const val TTS_URL = "http://14.19.140.88:8280/v1/tts"
+        private const val DEFAULT_TTS_URL = "http://14.19.140.88:8280/v1/tts"
         private const val PERMISSION_REQUEST_CODE = 1001
         private const val TAG_NET = "DUIX_NET"
     }
 
     private var baseDir = ""
     private var modelDir = ""
+    private var ttsUrl = DEFAULT_TTS_URL
 
 
     private lateinit var binding: ActivityCallBinding
@@ -72,6 +73,7 @@ class CallActivity : BaseActivity() {
 
         baseDir = intent.getStringExtra("baseDir") ?: ""
         modelDir = intent.getStringExtra("modelDir") ?: ""
+        ttsUrl = intent.getStringExtra("ttsUrl") ?: DEFAULT_TTS_URL
 
         Log.e("123", "baseDir: $baseDir")
         Log.e("123", "modelDir: $modelDir")
@@ -276,7 +278,7 @@ class CallActivity : BaseActivity() {
 
         // 打印请求信息
         Log.i(TAG_NET, "开始发送请求")
-        Log.i(TAG_NET, "请求URL: $TTS_URL")
+        Log.i(TAG_NET, "请求URL: $ttsUrl")
         Log.i(TAG_NET, "音频文件: ${audioFile.absolutePath}")
         Log.i(TAG_NET, "文件大小: ${audioFile.length()} bytes")
 
@@ -290,7 +292,7 @@ class CallActivity : BaseActivity() {
             .build()
 
         val request = Request.Builder()
-            .url(TTS_URL)
+            .url(ttsUrl)
             .post(requestBody)
             .build()
 

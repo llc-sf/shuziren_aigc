@@ -106,6 +106,28 @@
                 android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/progress_model" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_tts_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginHorizontal="0dp"
+                android:hint="TTS服务地址"
+                app:layout_constraintTop_toBottomOf="@id/progress_model"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_tts_url"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri"
+                    android:text="http://14.19.140.88:8280/v1/tts"
+                    android:textSize="14sp"
+                    android:padding="12dp"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
