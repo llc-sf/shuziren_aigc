@@ -66,6 +66,13 @@ class CallActivity : BaseActivity() {
     private var isProcessingRequest = false
     private val objectMapper = ObjectMapper()
     private var isPlaying = false
+    
+    // 创建一个配置了超时时间的 OkHttpClient
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -306,7 +313,7 @@ class CallActivity : BaseActivity() {
 
         val request = requestBuilder.build()
 
-        OkHttpClient().newCall(request).enqueue(object : Callback {
+        okHttpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 LogUtils.getInstance(this@CallActivity).log("请求失败: ${e.message}")
                 Log.e(TAG_NET, "请求失败: ${e.message}")
@@ -408,7 +415,7 @@ class CallActivity : BaseActivity() {
             .get()
             .build()
 
-        OkHttpClient().newCall(request).enqueue(object : Callback {
+        okHttpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG_NET, "音频下载失败: ${e.message}")
                 Log.e(TAG_NET, "失败URL: ${call.request().url}")
