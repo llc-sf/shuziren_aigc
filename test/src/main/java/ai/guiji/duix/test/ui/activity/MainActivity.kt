@@ -31,6 +31,7 @@ class MainActivity : BaseActivity() {
         private const val PERMISSION_REQUEST_CODE = 1001
         private const val PREF_NAME = "duix_settings"
         private const val KEY_TTS_URL = "tts_url"
+        private const val KEY_APIKEY = "apikey"
         private const val DEFAULT_TTS_URL = "http://14.19.140.88:8280/v1/tts"
     }
 
@@ -85,6 +86,10 @@ class MainActivity : BaseActivity() {
         val savedUrl = sharedPrefs.getString(KEY_TTS_URL, DEFAULT_TTS_URL)
         binding.etTtsUrl.setText(savedUrl)
 
+        // 从 SharedPreferences 加载上次保存的 API Key
+        val savedApiKey = sharedPrefs.getString(KEY_APIKEY, "")
+        binding.etApikey.setText(savedApiKey)
+
         binding.btnBaseConfigDownload.setOnClickListener {
             downloadBaseConfig()
         }
@@ -120,6 +125,18 @@ class MainActivity : BaseActivity() {
                     if (url.isNotEmpty()) {
                         sharedPrefs.edit().putString(KEY_TTS_URL, url).apply()
                     }
+                }
+            }
+        })
+
+        // 添加 API Key 输入框的文本变化监听
+        binding.etApikey.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                // 当用户输入完成后自动保存
+                s?.toString()?.trim()?.let { apiKey ->
+                    sharedPrefs.edit().putString(KEY_APIKEY, apiKey).apply()
                 }
             }
         })
@@ -229,6 +246,7 @@ class MainActivity : BaseActivity() {
             putExtra("baseDir", baseDir.absolutePath)
             putExtra("modelDir", modelDir.absolutePath)
             putExtra("ttsUrl", ttsUrl)  // 添加 ttsUrl 参数
+            putExtra("apiKey", binding.etApikey.text?.toString()?.trim())  // 添加 apiKey 参数
         }
         startActivity(intent)
     }

@@ -4,6 +4,7 @@ import ai.guiji.duix.sdk.client.Constant
 import ai.guiji.duix.sdk.client.DUIX
 import ai.guiji.duix.sdk.client.render.DUIXRenderer
 import ai.guiji.duix.test.databinding.ActivityCallBinding
+import ai.guiji.duix.test.util.LogUtils
 import android.media.AudioFormat
 import android.opengl.GLSurfaceView
 import android.os.Bundle
@@ -45,7 +46,7 @@ class CallActivity : BaseActivity() {
 
     companion object {
         const val GL_CONTEXT_VERSION = 2
-        private const val DEFAULT_TTS_URL = "http://14.19.140.88:8280/v1/tts"
+        private const val DEFAULT_TTS_URL = "http://14.19.169.45:8280/v1/tts"
         private const val PERMISSION_REQUEST_CODE = 1001
         private const val TAG_NET = "DUIX_NET"
     }
@@ -53,6 +54,7 @@ class CallActivity : BaseActivity() {
     private var baseDir = ""
     private var modelDir = ""
     private var ttsUrl = DEFAULT_TTS_URL
+    private var apiKey = ""  // 新增 apiKey 变量
 
 
     private lateinit var binding: ActivityCallBinding
@@ -74,6 +76,7 @@ class CallActivity : BaseActivity() {
         baseDir = intent.getStringExtra("baseDir") ?: ""
         modelDir = intent.getStringExtra("modelDir") ?: ""
         ttsUrl = intent.getStringExtra("ttsUrl") ?: DEFAULT_TTS_URL
+        apiKey = intent.getStringExtra("apiKey") ?: ""  // 获取 apiKey
 
         Log.e("123", "baseDir: $baseDir")
         Log.e("123", "modelDir: $modelDir")
@@ -278,6 +281,7 @@ class CallActivity : BaseActivity() {
 
         // 打印请求信息
         Log.i(TAG_NET, "开始发送请求")
+        LogUtils.getInstance(this).log("请求URL: $ttsUrl")
         Log.i(TAG_NET, "请求URL: $ttsUrl")
         Log.i(TAG_NET, "音频文件: ${audioFile.absolutePath}")
         Log.i(TAG_NET, "文件大小: ${audioFile.length()} bytes")
@@ -291,13 +295,20 @@ class CallActivity : BaseActivity() {
             )
             .build()
 
-        val request = Request.Builder()
+        val requestBuilder = Request.Builder()
             .url(ttsUrl)
             .post(requestBody)
-            .build()
+
+        // 如果有 apiKey，添加到请求头
+        if (apiKey.isNotEmpty()) {
+            requestBuilder.addHeader("X-API-Key", apiKey)
+        }
+
+        val request = requestBuilder.build()
 
         OkHttpClient().newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
+                LogUtils.getInstance(this@CallActivity).log("请求失败: ${e.message}")
                 Log.e(TAG_NET, "请求失败: ${e.message}")
                 Log.e(TAG_NET, "失败URL: ${call.request().url}")
                 Log.e(TAG_NET, "异常堆栈:", e)
@@ -317,7 +328,7 @@ class CallActivity : BaseActivity() {
                     
                     val responseStr = response.body?.string()
                     Log.i(TAG_NET, "响应数据: $responseStr")
-                    
+                    LogUtils.getInstance(this@CallActivity).log("响应数据: $responseStr")
                     if (responseStr != null) {
                         val jsonNode = objectMapper.readTree(responseStr)
                         val url = jsonNode.get("url")?.asText()
