@@ -36,7 +36,9 @@ import java.io.IOException
 import java.io.OutputStream
 import java.util.concurrent.Executors
 import android.Manifest
+import android.R
 import android.content.pm.PackageManager
+import android.widget.ArrayAdapter
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -55,6 +57,7 @@ class CallActivity : BaseActivity() {
     private var modelDir = ""
     private var ttsUrl = DEFAULT_TTS_URL
     private var apiKey = ""  // 新增 apiKey 变量
+    private var voiceType = "female"  // 新增 voiceType 变量，默认女声
 
 
     private lateinit var binding: ActivityCallBinding
@@ -84,9 +87,24 @@ class CallActivity : BaseActivity() {
         modelDir = intent.getStringExtra("modelDir") ?: ""
         ttsUrl = intent.getStringExtra("ttsUrl") ?: DEFAULT_TTS_URL
         apiKey = intent.getStringExtra("apiKey") ?: ""  // 获取 apiKey
+        voiceType = intent.getStringExtra("voiceType") ?: "female"  // 获取 voiceType
 
         Log.e("123", "baseDir: $baseDir")
         Log.e("123", "modelDir: $modelDir")
+
+        // 设置音色选择下拉框
+        val voiceTypes = arrayOf("女声", "男声")
+        val adapter = ArrayAdapter(this, com.google.android.material.R.layout.support_simple_spinner_dropdown_item, voiceTypes)
+        binding.actVoiceType.setAdapter(adapter)
+
+        // 设置初始值
+        binding.actVoiceType.setText(if (voiceType == "female") "女声" else "男声", false)
+
+        // 添加音色选择监听
+        binding.actVoiceType.setOnItemClickListener { _, _, position, _ ->
+            voiceType = if (position == 0) "female" else "male"
+            // 可以在这里添加其他需要的处理
+        }
 
         binding.btnPlay.setOnClickListener {
             playWav()
@@ -300,6 +318,7 @@ class CallActivity : BaseActivity() {
                 audioFile.name,
                 audioFile.asRequestBody("audio/wav".toMediaTypeOrNull())
             )
+            .addFormDataPart("voice_type", voiceType)  // 添加音色参数
             .build()
 
         val requestBuilder = Request.Builder()
