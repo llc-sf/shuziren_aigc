@@ -143,9 +143,6 @@ class MainActivity : BaseActivity() {
 
         checkFile()
 
-        binding.voice.setOnClickListener {
-            startActivity(Intent(this, MainVoiceActivity::class.java))
-        }
     }
 
     private fun checkPermissions(): Boolean {
